@@ -2,12 +2,17 @@ import os
 import uuid
 from PyPDF2 import PdfReader
 import docx
-from sentence_transformers import SentenceTransformer
-import chromadb
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.documents import Document
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
-client = chromadb.Client()
-collection = client.create_collection("documents")
+persist_directory = "data"
+
+embedder = HuggingFaceEmbeddings(
+    model_name = "sentence-transformers/all-MiniLM-L6-v2"
+)
+
+vectordb = Chroma(embedding_function=embedder, persist_directory=persist_directory)
 
 def read_file_content(file_path):
     print(f"Reading file: {file_path}")
@@ -53,15 +58,19 @@ def read_file_content(file_path):
     else:
         raise ValueError("Unsupported file type")
 
-def create_embeddings(content):
-    return model.encode(content)
-
-def store_embeddings(embeddings, metadata):
+def add_document_to_db(content, metadata):
     asset_id = str(uuid.uuid4())
-    embeddings_list = embeddings.tolist() if hasattr(embeddings, 'tolist') else embeddings
-    collection.add(embeddings=[embeddings_list], metadatas=[metadata], ids=[asset_id])
+    documents = [Document(page_content=content, metadata=metadata, id=asset_id)]
+    vectordb.add_documents(documents=documents)
     return asset_id
 
-def get_stored_embeddings(asset_id):
-    result = collection.get(ids=[asset_id])
-    return result
+def get_document_from_db(asset_id):
+    results = vectordb.get(ids=[asset_id])
+    return results
+
+def process_document_service(file_path: str):
+    content = read_file_content(file_path)
+    metadata = {"file_path": file_path}
+    asset_id = add_document_to_db(content, metadata)
+    get_document_from_db(asset_id)
+    return asset_id
