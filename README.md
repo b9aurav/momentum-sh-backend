@@ -7,7 +7,7 @@ This project is a chat service that allows users to start chat threads, post mes
 1. **Clone the repository**:
     ```sh
     git clone https://github.com/b9aurav/momentum-sh-backend.git
-    cd chat-service
+    cd momentum-sh-backend
     ```
 
 2. **Create a virtual environment**:
@@ -22,15 +22,19 @@ This project is a chat service that allows users to start chat threads, post mes
     ```
 
 4. **Set up environment variables**:
-    Create a `.env` file in the root directory and add the following:
+    * Create a `.env` file in the root directory and add the following:
     ```env
     COHERE_API_KEY=your_cohere_api_key
     ```
+    This project is using `command-medium-nightly` model by Cohere.
 
 5. **Run the application**:
     ```sh
     uvicorn main:app --reload
     ```
+
+6. **Test the application**
+    * After successful execution, You can access the API endpoints in tool like Postman, or you can test API endpoints from [http://localhost:8000/docs](http://localhost:8000/docs) (This does not support real-time interaction, Use Postman to interact with real-time response streaming)
 
 ## API Documentation
 
@@ -111,7 +115,11 @@ This project is a chat service that allows users to start chat threads, post mes
 **Response**
 ```json
 {
-    "History"
+    {
+        "user_message": "string",
+        "agent_response": "string"
+    },
+    ...
 }
 ```
 
