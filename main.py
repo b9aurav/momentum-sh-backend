@@ -52,6 +52,6 @@ async def websocket_endpoint(websocket: WebSocket, chat_thread_id: str):
                 agent_response = await post_message_service(chat_thread_id, user_message)
                 await websocket.send_text(agent_response)
             except ValueError as e:
-                await websocket.send_text("Chat thread not found")
+                await websocket.send_text("Error: " + str(e))
     except WebSocketDisconnect:
         print(f"WebSocket disconnected for chat thread {chat_thread_id}")

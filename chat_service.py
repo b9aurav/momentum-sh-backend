@@ -7,6 +7,7 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 import uuid
+import json
 
 dotenv.load_dotenv()
 llm = ChatCohere(model='command-medium-nightly', cohere_api_key=dotenv.get_key(dotenv_path='.env', key_to_get='COHERE_API_KEY'))
@@ -30,7 +31,19 @@ async def post_message_service(chat_thread_id: str, user_message: str) -> str:
     asset_id = results['metadatas'][0]['asset_id']
     agent_response = await query_langchain(asset_id, user_message)
     
-    updated_content = results['documents'][0] + f"\nUser: {user_message}\nAgent: {agent_response}"
+    existing_content = results['documents'][0]
+    if existing_content:
+        chat_history = json.loads(existing_content)
+    else:
+        chat_history = []
+
+    chat_history.append({
+        "user_message": user_message,
+        "agent_response": agent_response
+    })
+
+    # updated_content = results['documents'][0] + f"\nUser: {user_message}\nAgent: {agent_response}"
+    updated_content = json.dumps(chat_history)
     metadata = results['metadatas'][0]
     
     vectordb.update_documents(documents=[Document(page_content=updated_content, metadata=metadata)], ids=[chat_thread_id])
@@ -42,7 +55,7 @@ async def get_chat_history_service(chat_thread_id: str):
     if not results:
         raise ValueError("Chat thread not found")
     
-    return results['documents'][0]
+    return json.loads(results['documents'][0])
 
 async def query_langchain(asset_id: str, user_message: str) -> str:
     result = get_document_from_db(asset_id)
