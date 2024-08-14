@@ -44,7 +44,6 @@ def read_file_content(file_path):
             raise e
     elif ext == ".docx":
         try:
-            print(f"Attempting to read .docx file: {file_path}")
             doc = docx.Document(file_path)
             fullText = []
             for para in doc.paragraphs:
@@ -58,7 +57,7 @@ def read_file_content(file_path):
     else:
         raise ValueError("Unsupported file type")
 
-def add_document_to_db(content, metadata):
+async def add_document_to_db(content, metadata):
     asset_id = str(uuid.uuid4())
     documents = [Document(page_content=content, metadata=metadata, id=asset_id)]
     vectordb.add_documents(documents=documents)
@@ -68,9 +67,9 @@ def get_document_from_db(asset_id):
     results = vectordb.get(ids=[asset_id])
     return results
 
-def process_document_service(file_path: str):
+async def process_document_service(file_path: str):
     content = read_file_content(file_path)
     metadata = {"file_path": file_path}
-    asset_id = add_document_to_db(content, metadata)
+    asset_id = await add_document_to_db(content, metadata)
     get_document_from_db(asset_id)
     return asset_id

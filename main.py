@@ -9,7 +9,7 @@ app = FastAPI()
 async def process_document(input: models.DocumentInput):
     file_path = input.file_path
     try:
-        asset_id = process_document_service(file_path)
+        asset_id = await process_document_service(file_path)
         return {"asset_id": asset_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -17,7 +17,7 @@ async def process_document(input: models.DocumentInput):
 @app.post("/api/chat/start")
 async def start_chat(input: models.StartChatInput):
     try:
-        chat_thread_id = start_chat_service(input.asset_id)
+        chat_thread_id = await start_chat_service(input.asset_id)
         return {"chat_thread_id": chat_thread_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -25,7 +25,7 @@ async def start_chat(input: models.StartChatInput):
 @app.post("/api/chat/message")
 async def post_message(input: models.PostMessageInput):
     try:
-        agent_response = post_message_service(input.chat_thread_id, input.user_message)
+        agent_response = await post_message_service(input.chat_thread_id, input.user_message)
         return {"agent_response": agent_response}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -35,7 +35,7 @@ async def post_message(input: models.PostMessageInput):
 @app.get("/api/chat/history")
 async def get_history(chat_thread_id: str):
     try:
-        messages = get_chat_history_service(chat_thread_id)
+        messages = await get_chat_history_service(chat_thread_id)
         return messages
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -49,7 +49,7 @@ async def websocket_endpoint(websocket: WebSocket, chat_thread_id: str):
             user_message = data
             
             try:
-                agent_response = post_message_service(chat_thread_id, user_message)
+                agent_response = await post_message_service(chat_thread_id, user_message)
                 await websocket.send_text(agent_response)
             except ValueError as e:
                 await websocket.send_text("Chat thread not found")
